@@ -1,7 +1,14 @@
-# Tree transducers?
+# Tree homomorphisms
+
+A slight generalisation of the definition of term/tree homomorphisms
+by Bahr & Hvitved, in `SET`.
+
+This is even more useful in `SET^`, and in general should be attempted
+on top of a suitable formalisation of category theory, but I'd like to
+keep things simple for now.
 
 \begin{code}
-module TT where
+module TH where
 
 open import AD hiding (Cont ; Functor ; module Functor ; _*_)
 \end{code}
@@ -80,44 +87,46 @@ module Cata F {X Y} where
   cata* α f (In (a , t)) = α (a , λ b → cata* α f (t b))
 \end{code}
 
-## Tree transducers and behaviours
+## Tree homomorphisms and their behaviours
+
+See "Hasuo, Jacobs, Uustalu - Categorical Views on Computations on Trees".
 
 \begin{code}
-_TT[_]>_ _LBEH[_]>_ _GBEH[_]>_ : Cont → Functor → Cont → Set₁
-F TT[   H ]> G = ∀ {X} → ⟦ F ⟧ (∣ H ∣ X) → ∣ H ∣ (G * X)
+_TH[_]>_ _LBEH[_]>_ _GBEH[_]>_ : Cont → Functor → Cont → Set₁
+F TH[   H ]> G = ∀ {X} → ⟦ F ⟧ (∣ H ∣ X) → ∣ H ∣ (G * X)
 F LBEH[ H ]> G = ∀ {X} → F ALG> ∣ H ∣ (G * X)
 F GBEH[ H ]> G = ∀ {X} → F * ∣ H ∣ X → ∣ H ∣ (G * X)
 \end{code}
 
-TODO. In order to prove anything interesting, one should refine these
-definitions. For example, TTs should be paired with their naturality.
+TODO. In order to prove anything interesting, one must refine these
+definitions. For example, THs should be paired with their naturality.
 
 \begin{code}
 module Behs (F : Cont)(H : Functor)(G : Cont) where
 
   open Cata F
 
-  TT→LBEH : F TT[ H ]> G → F LBEH[ H ]> G
-  TT→LBEH α = ∣ H ∣map join ∘ α
+  TH→LBEH : F TH[ H ]> G → F LBEH[ H ]> G
+  TH→LBEH α = ∣ H ∣map join ∘ α
 
   LBEH→GBEH : F LBEH[ H ]> G → F GBEH[ H ]> G
   LBEH→GBEH α = cata* α (∣ H ∣map η)
 
-  TT→GBEH : F TT[ H ]> G → F GBEH[ H ]> G
-  TT→GBEH = LBEH→GBEH ∘ TT→LBEH
+  TH→GBEH : F TH[ H ]> G → F GBEH[ H ]> G
+  TH→GBEH = LBEH→GBEH ∘ TH→LBEH
 \end{code}
 
-### Category of tree transducers?
+### Category of tree homomorphisms?
 
 \begin{code}
-idTT : ∀ {F} → F TT[ idF ]> F
-idTT (a , f) = In (a , η ∘ f)
+idTH : ∀ {F} → F TH[ idF ]> F
+idTH (a , f) = In (a , η ∘ f)
 \end{code}
 
 \begin{code}
-module ∙TT {F G H : Cont}{M N : Functor} where
+module ∙TH {F G H : Cont}{M N : Functor} where
 
-  _∙TT_ : G TT[ M ]> H → F TT[ N ]> G → F TT[ N ∙ M ]> H
-  α ∙TT β = ∣ N ∣map (TT→GBEH α) ∘ β where open Behs G M H
+  _∙TH_ : G TH[ M ]> H → F TH[ N ]> G → F TH[ N ∙ M ]> H
+  α ∙TH β = ∣ N ∣map (TH→GBEH α) ∘ β where open Behs G M H
 \end{code}
 
