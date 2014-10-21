@@ -1,9 +1,11 @@
-# Tree homomorphisms
+# (Generalised? Effectful?) Tree homomorphisms between containers
 
-A slight generalisation of the definition of term/tree homomorphisms
-by Bahr & Hvitved, in `SET`.
+A generalisation of the definition of term/tree homomorphisms by Bahr
+& Hvitved, restricted to `Set`-based containers. They also seem to
+generalise `TT` at page 24 of Tarmo Uustalu's slides from ICALP 2007.
 
-This is even more useful in `SET^`, and in general should be attempted
+This is more useful with (heterogeneous) indexed
+containers/interaction structures. In general it should be attempted
 on top of a suitable formalisation of category theory, but I'd like to
 keep things simple for now.
 
@@ -89,17 +91,23 @@ module Cata F {X Y} where
 
 ## Tree homomorphisms and their behaviours
 
-See "Hasuo, Jacobs, Uustalu - Categorical Views on Computations on Trees".
+The "behaviours" terminology is inspired by the ICALP 2007 slides by
+Tarmo Uustalu. However, these `LBEH` and `GBEH` seem different, and
+not necessarily correct.
 
 \begin{code}
 _TH[_]>_ _LBEH[_]>_ _GBEH[_]>_ : Cont → Functor → Cont → Set₁
 F TH[   H ]> G = ∀ {X} → ⟦ F ⟧ (∣ H ∣ X) → ∣ H ∣ (G * X)
+-- [1] This is what I used to do:
 F LBEH[ H ]> G = ∀ {X} → F ALG> ∣ H ∣ (G * X)
+-- [2] This one, more similar to icalp-slides.pdf, maybe works when H is a monad...
+-- F LBEH[ H ]> G = ∀ {X} → ⟦ F ⟧ (∣ H ∣ (F * X)) → ∣ H ∣ (G * X)
 F GBEH[ H ]> G = ∀ {X} → F * ∣ H ∣ X → ∣ H ∣ (G * X)
 \end{code}
 
 TODO. In order to prove anything interesting, one must refine these
-definitions. For example, THs should be paired with their naturality.
+definitions. For example, THs should at least be paired with their
+naturality. For what concerns LBEHs and GBEHs, I don't know yet.
 
 \begin{code}
 module Behs (F : Cont)(H : Functor)(G : Cont) where
@@ -107,7 +115,10 @@ module Behs (F : Cont)(H : Functor)(G : Cont) where
   open Cata F
 
   TH→LBEH : F TH[ H ]> G → F LBEH[ H ]> G
+-- [1]
   TH→LBEH α = ∣ H ∣map join ∘ α
+-- [2]
+--  TH→LBEH α = ∣ H ∣map join ∘ α ∘ ∣ ⟦ F ⟧map ∣map {!!}
 
   LBEH→GBEH : F LBEH[ H ]> G → F GBEH[ H ]> G
   LBEH→GBEH α = cata* α (∣ H ∣map η)
@@ -117,6 +128,8 @@ module Behs (F : Cont)(H : Functor)(G : Cont) where
 \end{code}
 
 ### Category of tree homomorphisms?
+
+Helpers.
 
 \begin{code}
 idTH : ∀ {F} → F TH[ idF ]> F
@@ -130,3 +143,45 @@ module ∙TH {F G H : Cont}{M N : Functor} where
   α ∙TH β = ∣ N ∣map (TH→GBEH α) ∘ β where open Behs G M H
 \end{code}
 
+Objects are containers (`Cont`).
+
+I guess `TH/ H` might be a valid homset only if `H` is a monad, but
+this is not the category we need.
+
+\begin{code}
+TH/ : Functor → Cont → Cont → Set₁
+TH/ H F G = F TH[ H ]> G
+\end{code}
+
+`TH` should capture the homset of the category of containers and tree
+homomorphisms.
+
+\begin{code}
+TH : Cont → Cont → Set₁
+TH F G = Σ _ λ H → TH/ H F G
+\end{code}
+
+### page 24 of icalp-slides.pdf (sort of)
+
+\begin{code}
+TT/ : Set → Cont → Cont → Set₁
+TT/ X F G = ∀ {Y} → ⟦ F ⟧ (Y × X) → G * Y × X
+\end{code}
+
+In Tarmo Uustalu's talk slides there are three possible definitions of
+tree transducers: with `TT` we refer to the homset for the last one.
+
+\begin{code}
+TT : Cont → Cont → Set₁
+TT F G = Σ _ λ X → TT/ X F G
+\end{code}
+
+`TH` and `TT` share the same objects, and we have this inclusion of
+morphisms.
+
+\begin{code}
+TT→TH : ∀ {F G} → TT F G → TH F G 
+TT→TH (X , α) = mk (_×_ § X) (Σ.map § id) , α
+\end{code}
+
+TODO. Is `TT` a "lluf" subcategory of `TH`?
