@@ -1,3 +1,3 @@
-# Tree transducers?
+# Tree homomorphisms and transducers in Agda
 
-TODO
+Requires https://github.com/ma82/adapter
